@@ -1,0 +1,19 @@
+# Terraform state & secrets — never commit these
+terraform/terraform.tfvars
+terraform/*.pem
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+# Local backend override for development (overrides the S3 backend in CI)
+terraform/backend_override.tf
+# Terraform SSH keys generated during provisioning
+terraform/.terraform-ssh-cert.pub
+terraform/.terraform-ssh-key
+# Bootstrap local state (one-time run, never commit)
+terraform/bootstrap/.terraform/
+terraform/bootstrap/terraform.tfstate
+terraform/bootstrap/terraform.tfstate.backup
+# Note: .terraform.lock.hcl IS committed (regenerate with: make lock-demo-look-ma-no-secrets)
+
+# Node
+app/node_modules/

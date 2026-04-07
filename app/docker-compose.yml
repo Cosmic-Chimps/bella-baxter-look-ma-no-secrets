@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml
+#
+# ⚠️  SAFE TO COMMIT — this file contains NO database secrets.
+#
+# DATABASE_URL and RDS_PASSWORD are stored in Bella Baxter.
+# The container's ENTRYPOINT ("bella sdk run --") fetches them at startup
+# and injects them into process.env before node server.js launches.
+#
+# The only credentials here are the Bella API key — which grants access
+# to retrieve secrets, but reveals nothing about your infrastructure.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      # ── Bella connection ──────────────────────────────────────────────────
+      # BELLA_BAXTER_API_KEY is a bax-... opaque token obtained from the WebApp.
+      # BELLA_BAXTER_URL tells the CLI/SDK where the Baxter API lives.
+      # BELLA_BAXTER_PRIVATE_KEY enables Zero-Knowledge Encryption (ZKE).
+      # These are the only credentials this container ever needs.
+      BELLA_BAXTER_URL:         ${BELLA_BAXTER_URL}
+      BELLA_BAXTER_API_KEY:     ${BELLA_BAXTER_API_KEY}
+      BELLA_BAXTER_PRIVATE_KEY: ${BELLA_BAXTER_PRIVATE_KEY}
+      BELLA_ENV:     ${BELLA_ENV:-production}
+      BELLA_PROJECT: ${BELLA_PROJECT}
+
+      # ── App config (non-secret) ───────────────────────────────────────────
+      NODE_ENV: production
+      PORT: "3000"
+
+      # ── NO DATABASE_URL HERE ──────────────────────────────────────────────
+      # That's the whole point. DATABASE_URL lives in Bella, not here.
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

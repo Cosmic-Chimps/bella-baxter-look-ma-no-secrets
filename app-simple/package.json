@@ -1,0 +1,18 @@
+{
+  "name": "look-ma-no-secrets-simple",
+  "version": "1.0.0",
+  "description": "Bella Baxter demo — zero secrets in Docker Compose (plain bella run, no SDK)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build": "echo 'No build step needed'"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.13.0"
+  }
+}

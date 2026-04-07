@@ -1,0 +1,41 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml — plain bella run demo (no SDK, no ZKE)
+#
+# ⚠️  SAFE TO COMMIT — this file contains NO database secrets.
+#
+# DATABASE_URL and RDS_PASSWORD are stored in Bella Baxter.
+# The container's ENTRYPOINT ("bella run --") fetches them at startup
+# and injects them into process.env before node server.js launches.
+#
+# Contrast with app/docker-compose.yml which uses "bella sdk run" + ZKE.
+# Both apps read from the same Bella project/environment.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      # ── Bella connection ──────────────────────────────────────────────────
+      # No BELLA_BAXTER_PRIVATE_KEY — ZKE is disabled for this demo.
+      # This is the whole point of the comparison: bella run works without
+      # any additional setup, bella sdk run adds ZKE on top.
+      BELLA_BAXTER_URL:     ${BELLA_BAXTER_URL}
+      BELLA_BAXTER_API_KEY: ${BELLA_BAXTER_API_KEY}
+      BELLA_ENV:     ${BELLA_ENV:-production}
+      BELLA_PROJECT: ${BELLA_PROJECT}
+
+      # ── App config (non-secret) ───────────────────────────────────────────
+      NODE_ENV: production
+      PORT: "3000"
+
+      # ── NO DATABASE_URL HERE ──────────────────────────────────────────────
+      # That's the whole point. DATABASE_URL lives in Bella, not here.
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
