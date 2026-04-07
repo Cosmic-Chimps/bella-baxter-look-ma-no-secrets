@@ -2,7 +2,7 @@
 
 > **One `terraform apply` provisions AWS infrastructure, stores all credentials in Bella Baxter,
 > and deploys an Express app that connects to a private RDS database — with zero database
-> secrets anywhere in Docker Compose, version control, or config files.**
+> secrets anywhere in Docker Compose, version control, config files, or CI/CD secrets.**
 
 ---
 
@@ -95,6 +95,8 @@ Once deployed:
   - An API client (`bella_client_id` + `bella_client_secret`)
   - A project + environment already created
   - The environment UUID and provider UUID from the Bella UI
+  - **For CI/CD:** a TrustDomain configured for this GitHub repo with `GrantedRole: Manager`
+    (see [CI/CD setup](#cicd--zero-secrets-in-github-actions) below)
 
 ---
 
@@ -177,6 +179,11 @@ The Terraform-generated SSH key (`terraform/lmns.pem`) is deleted automatically.
 
 ```
 look-ma-no-secrets/
+├── .github/
+│   └── workflows/
+│       ├── terraform-plan.yml     ← runs on PRs, posts plan as PR comment
+│       ├── terraform-apply.yml    ← runs on push to main
+│       └── terraform-destroy.yml  ← manual trigger only
 ├── app/
 │   ├── db/
 │   │   └── seed.sql           ← creates products + deploys tables, seeds data
@@ -205,6 +212,101 @@ look-ma-no-secrets/
 5. `exec`s the command that follows `--` (i.e., `node server.js`) with those vars injected
 
 The database password is in memory only, for the duration of the process. It is never written to any file, volume, or log.
+
+---
+
+## CI/CD — Zero Secrets in GitHub Actions
+
+The three Terraform workflows (`terraform-plan`, `terraform-apply`, `terraform-destroy`)
+use the same principle at CI level: **no `BELLA_API_KEY` is ever stored in GitHub Secrets.**
+
+Instead, each workflow uses [bella-baxter-setup-action](https://github.com/Cosmic-Chimps/bella-baxter-setup-action)
+with OIDC workload identity:
+
+```yaml
+permissions:
+  id-token: write  # required for OIDC
+
+steps:
+  - uses: Cosmic-Chimps/bella-baxter-setup-action@v1
+    with:
+      bella-url: ${{ vars.BELLA_BAXTER_URL }}
+      oidc: 'true'
+```
+
+That's it. What happens under the hood:
+
+```
+GitHub Actions runner
+  │
+  ├─ requests OIDC JWT from GitHub token service
+  │    (claims: repo, ref, workflow, sha, actor, ...)
+  │
+  ├─ bella auth oidc
+  │    └─ POST /api/v1/token  { oidcToken: "..." }
+  │         │
+  │         └─ Bella server:
+  │              1. Decode JWT → extract issuer (token.actions.githubusercontent.com)
+  │              2. Search TrustDomains by issuer
+  │              3. Validate signature against JWKS
+  │              4. Evaluate ClaimRules (e.g. repo == "org/repo", ref == "refs/heads/main")
+  │              5. Issue short-lived key with GrantedRole from TrustDomain
+  │
+  └─ BELLA_API_KEY exported to $GITHUB_ENV (masked in logs)
+       └─ terraform plan/apply uses it for bella_secret resources
+```
+
+### Full dogfooding — `bella run -- terraform`
+
+The Terraform workflows go one step further: all sensitive `TF_VAR_*` values are stored
+as secrets in Bella (not in GitHub Secrets), and `bella run --` injects them at runtime:
+
+```yaml
+# In each terraform step, instead of:
+run: terraform apply -auto-approve
+
+# The workflow uses:
+run: bella run -- terraform apply -auto-approve
+```
+
+`bella run` authenticates via OIDC (same token exchange as `bella auth oidc`), then
+automatically discovers which project and environment to fetch secrets from by calling
+`GET /api/v1/keys/me` — the issued token already encodes the environment it's scoped to.
+No `BELLA_BAXTER_PROJECT` or `BELLA_BAXTER_ENV` variables needed.
+
+**What moved from GitHub Secrets → Bella:**
+
+| Secret (removed) | Bella secret name |
+|------------------|-------------------|
+| `BELLA_APP_API_KEY` | `TF_VAR_BELLA_APP_API_KEY` |
+| `BELLA_APP_PRIVATE_KEY` | `TF_VAR_BELLA_APP_PRIVATE_KEY` |
+| `DOKPLOY_ADMIN_PASSWORD` | `TF_VAR_DOKPLOY_ADMIN_PASSWORD` |
+| `BELLA_CI_PRIVATE_KEY` | *(gone — ZKE is skipped with OIDC workload identity)* |
+
+AWS credentials (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) can also be moved to
+Bella to achieve **zero** stored GitHub Secrets.
+
+### GitHub Variables needed
+
+None. The CLI defaults to `https://api.bella-baxter.io` and discovers project/environment
+context from the token. Non-sensitive Terraform defaults are hardcoded in the workflow.
+
+> If you self-host Bella, set `BELLA_BAXTER_URL` as a GitHub Variable and pass it via
+> `bella-url: ${{ vars.BELLA_BAXTER_URL }}` in the setup-action step.
+
+### TrustDomain setup in Bella
+
+In the Bella UI (or API), create a TrustDomain on the environment used by Terraform:
+
+| Field | Value |
+|-------|-------|
+| **OIDC Issuer URL** | `https://token.actions.githubusercontent.com` |
+| **Claim Rules** | `repository` = `your-org/look-ma-no-secrets` |
+| **Granted Role** | `Manager` |
+| **TTL** | `15` minutes |
+
+The `Manager` role gives Terraform write access to create and update `bella_secret`
+resources. The key expires after 15 minutes — safe even if the token were intercepted.
 
 ---
 

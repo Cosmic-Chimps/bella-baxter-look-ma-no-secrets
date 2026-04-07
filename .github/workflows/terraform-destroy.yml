@@ -38,30 +38,29 @@ jobs:
 
     env:
       TF_IN_AUTOMATION: true
-      AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      # AWS credentials — these can also be stored in Bella (as AWS_ACCESS_KEY_ID /
+      # AWS_SECRET_ACCESS_KEY secrets) to achieve zero GitHub secrets entirely.
       AWS_REGION:            ${{ vars.AWS_REGION || 'us-east-1' }}
 
+      # Non-sensitive Terraform variables
       TF_VAR_bella_baxter_url:    ${{ vars.BELLA_BAXTER_URL }}
       TF_VAR_dokploy_admin_email: ${{ vars.DOKPLOY_ADMIN_EMAIL }}
       TF_VAR_aws_region:          ${{ vars.AWS_REGION || 'us-east-1' }}
       TF_VAR_project_name:        ${{ vars.PROJECT_NAME || 'lmns' }}
       TF_VAR_app_name:            ${{ vars.APP_NAME || 'look-ma-no-secrets-demo' }}
       TF_VAR_ami_id:              ${{ vars.AMI_ID || 'ami-0905a3c97561e0b69' }}
+      TF_VAR_bella_provider_slug: ${{ vars.BELLA_PROVIDER_SLUG }}
 
-      # Note: BELLA_API_KEY is NOT stored — obtained dynamically via OIDC exchange (see step below)
-      BELLA_BAXTER_PRIVATE_KEY:        ${{ secrets.BELLA_CI_PRIVATE_KEY }}
-      TF_VAR_bella_app_api_key:        ${{ secrets.BELLA_APP_API_KEY }}
-      TF_VAR_bella_app_private_key:    ${{ secrets.BELLA_APP_PRIVATE_KEY }}
-      TF_VAR_bella_provider_slug:     ${{ vars.BELLA_PROVIDER_SLUG }}
-      TF_VAR_dokploy_admin_password:  ${{ secrets.DOKPLOY_ADMIN_PASSWORD }}
+      # bella run resolves project+env automatically from GET /api/v1/keys/me —
+      # the OIDC-issued token already encodes which environment it's scoped to.
+      # No BELLA_BAXTER_PROJECT / BELLA_BAXTER_ENV variables needed.
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: Cosmic-Chimps/bella-baxter-setup-action@v1
         with:
-          bella-url: ${{ vars.BELLA_BAXTER_URL }}
           oidc: 'true'
 
       - uses: hashicorp/setup-terraform@v3
@@ -71,13 +70,13 @@ jobs:
       - name: Terraform Init
         working-directory: terraform
         run: |
-          terraform init \
+          bella run -- terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=${{ secrets.TF_STATE_KEY }}"
 
       - name: Terraform Destroy
         working-directory: terraform
-        run: terraform destroy -auto-approve -no-color
+        run: bella run -- terraform destroy -auto-approve -no-color
 
   notify:
     runs-on: ubuntu-latest
