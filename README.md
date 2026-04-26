@@ -274,25 +274,58 @@ automatically discovers which project and environment to fetch secrets from by c
 `GET /api/v1/keys/me` — the issued token already encodes the environment it's scoped to.
 No `BELLA_BAXTER_PROJECT` or `BELLA_BAXTER_ENV` variables needed.
 
-**What moved from GitHub Secrets → Bella:**
+### 🏦 Bella Secrets (injected by `bella run --` at runtime)
 
-| Secret (removed) | Bella secret name |
-|------------------|-------------------|
-| `BELLA_APP_API_KEY` | `TF_VAR_BELLA_APP_API_KEY` |
-| `BELLA_APP_PRIVATE_KEY` | `TF_VAR_BELLA_APP_PRIVATE_KEY` |
-| `DOKPLOY_ADMIN_PASSWORD` | `TF_VAR_DOKPLOY_ADMIN_PASSWORD` |
-| `BELLA_CI_PRIVATE_KEY` | *(gone — ZKE is skipped with OIDC workload identity)* |
+All sensitive values live in the Bella project/environment the OIDC TrustDomain is scoped to.
+`bella run -- <cmd>` fetches them and injects them as environment variables before the command runs —
+so Terraform, AWS CLI, and the shell all see them automatically.
 
-AWS credentials (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) can also be moved to
-Bella to achieve **zero** stored GitHub Secrets.
+| Bella secret name | What it is |
+|-------------------|------------|
+| `AWS_ACCESS_KEY_ID` | AWS IAM access key |
+| `AWS_SECRET_ACCESS_KEY` | AWS IAM secret key |
+| `TF_STATE_BUCKET` | S3 bucket name for Terraform remote state |
+| `TF_STATE_KEY` | S3 object key for the state file (e.g. `lmns/terraform.tfstate`) |
+| `TF_VAR_dokploy_admin_password` | Dokploy admin password |
+| `TF_VAR_bella_app_api_key` | Long-lived Bella API key for the EC2 container |
+| `TF_VAR_bella_app_private_key` | ZKE private key (optional, for SDK app) |
 
-### GitHub Variables needed
+The `terraform init` step uses a `sh -c` wrapper so the shell expands `${TF_STATE_BUCKET}` and
+`${TF_STATE_KEY}` **after** `bella run` has injected them — not at GitHub Actions parse time:
 
-None. The CLI defaults to `https://api.bella-baxter.io` and discovers project/environment
-context from the token. Non-sensitive Terraform defaults are hardcoded in the workflow.
+```yaml
+run: |
+  bella run -- sh -c '
+    terraform init \
+      -backend-config="bucket=${TF_STATE_BUCKET}" \
+      -backend-config="key=${TF_STATE_KEY}"
+  '
+```
 
-> If you self-host Bella, set `BELLA_BAXTER_URL` as a GitHub Variable and pass it via
-> `bella-url: ${{ vars.BELLA_BAXTER_URL }}` in the setup-action step.
+### 📋 GitHub Variables needed
+
+Non-sensitive Terraform defaults are set as GitHub Variables (`vars.*`):
+
+| Variable | Default if omitted |
+|----------|--------------------|
+| `BELLA_BAXTER_URL` | *(required — your Bella instance URL)* |
+| `BELLA_PROVIDER_SLUG` | *(required — e.g. `baxter-openbao`)* |
+| `DOKPLOY_ADMIN_EMAIL` | *(required)* |
+| `AWS_REGION` | `us-east-1` |
+| `PROJECT_NAME` | `lmns` |
+| `APP_NAME` | `look-ma-no-secrets-demo` |
+| `AMI_ID` | `ami-0905a3c97561e0b69` |
+
+### 🔐 GitHub Secrets needed
+
+The only remaining GitHub Secret is optional:
+
+| Secret | Used for |
+|--------|----------|
+| `SLACK_WEBHOOK_URL` | Slack notifications on apply/destroy (omit to skip) |
+
+Everything else — AWS credentials, Terraform state config, Dokploy password, Bella API key —
+lives in Bella and is injected at runtime by `bella run --`.
 
 ### TrustDomain setup in Bella
 

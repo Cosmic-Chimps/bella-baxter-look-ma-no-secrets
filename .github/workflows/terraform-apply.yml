@@ -55,9 +55,11 @@ jobs:
       - name: Terraform Init
         working-directory: terraform
         run: |
-          bella run -- terraform init \
-            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-            -backend-config="key=${{ secrets.TF_STATE_KEY }}"
+          bella run -- sh -c '
+            terraform init \
+              -backend-config="bucket=${TF_STATE_BUCKET}" \
+              -backend-config="key=${TF_STATE_KEY}"
+          '
 
       - name: Terraform Apply
         working-directory: terraform
