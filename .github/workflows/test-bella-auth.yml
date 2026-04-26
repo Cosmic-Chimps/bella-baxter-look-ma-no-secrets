@@ -34,8 +34,10 @@ jobs:
             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bella-baxter" \
             | jq -r '.value')
 
-          echo "=== Raw JWT (first 80 chars) ==="
-          echo "${TOKEN:0:80}..."
+          echo "=== Raw JWT (base64-encoded for local testing) ==="
+          echo "Decode with: base64 -d <<< '<value>' | tr -d '\n'"
+          echo "Then run: bella auth oidc --token \"\$(base64 -d <<< '<value>')\""
+          echo "$TOKEN" | base64
 
           echo ""
           echo "=== JWT Claims ==="
