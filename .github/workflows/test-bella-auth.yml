@@ -1,0 +1,65 @@
+name: 🧪 Test Bella Auth (OIDC only)
+
+# Push this to jjchiw/look-ma-no-secrets to quickly validate:
+#   1. The Bella CLI installs
+#   2. bella auth oidc succeeds against the trust domain
+#   3. The issued key is valid (bella whoami)
+#
+# Runs in ~15s — no Terraform, no AWS, no infra changes.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/test-bella-auth.yml"
+
+permissions:
+  id-token: write   # Required for GitHub OIDC token
+  contents: read
+
+jobs:
+  test-auth:
+    name: Test OIDC Exchange
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Pre-flight: decode the OIDC token claims before sending to Bella ──
+      # This lets you compare claims vs trust domain rules without CLI changes.
+      - name: 🔍 Debug — decode OIDC token claims
+        run: |
+          TOKEN=$(curl -sSfL \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            -H "Accept: application/json" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bella-baxter" \
+            | jq -r '.value')
+
+          echo "=== Raw JWT (first 80 chars) ==="
+          echo "${TOKEN:0:80}..."
+
+          echo ""
+          echo "=== JWT Claims ==="
+          # Decode payload (middle segment), pad base64 if needed
+          PAYLOAD=$(echo "$TOKEN" | cut -d'.' -f2)
+          # Add padding
+          PADDED="${PAYLOAD}$(printf '%0.s=' $((4 - ${#PAYLOAD} % 4)))"
+          echo "$PADDED" | base64 -d 2>/dev/null | jq .
+
+          echo ""
+          echo "=== Trust Domain Check ==="
+          echo "Expected claim: repository = jjchiw/look-ma-no-secrets"
+          echo "Expected claim: ref = refs/heads/main"
+          REPO=$(echo "$PADDED" | base64 -d 2>/dev/null | jq -r '.repository // "NOT FOUND"')
+          REF=$(echo "$PADDED" | base64 -d 2>/dev/null | jq -r '.ref // "NOT FOUND"')
+          echo "Actual   claim: repository = $REPO"
+          echo "Actual   claim: ref = $REF"
+
+      - name: Setup Bella CLI + OIDC auth
+        uses: Cosmic-Chimps/bella-baxter-setup-action@main
+        with:
+          oidc: true
+        env:
+          BELLA_BAXTER_URL: https://api.bella-baxter.io
+
+      - name: Verify — bella whoami
+        run: bella whoami
