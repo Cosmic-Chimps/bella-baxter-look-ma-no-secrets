@@ -14,10 +14,10 @@ FROM node:24-slim AS runtime
 ARG BELLA_VERSION=
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && if [ -n "${BELLA_VERSION}" ]; then \
-         curl -sSfL https://raw.githubusercontent.com/cosmic-chimps/bella-baxter/main/scripts/install-bella.sh \
+         curl -sSfL https://raw.githubusercontent.com/cosmic-chimps/bella-baxter-cli/main/scripts/install-bella.sh \
            | bash -s -- --version "${BELLA_VERSION}"; \
        else \
-         curl -sSfL https://raw.githubusercontent.com/cosmic-chimps/bella-baxter/main/scripts/install-bella.sh \
+         curl -sSfL https://raw.githubusercontent.com/cosmic-chimps/bella-baxter-cli/main/scripts/install-bella.sh \
            | bash; \
        fi \
     && apt-get purge -y --auto-remove curl \
