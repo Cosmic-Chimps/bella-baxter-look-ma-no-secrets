@@ -9,13 +9,9 @@ name: 🧪 Test Bella Auth (OIDC only)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/test-bella-auth.yml"
 
 permissions:
-  id-token: write   # Required for GitHub OIDC token
+  id-token: write # Required for GitHub OIDC token
   contents: read
 
 jobs:
@@ -62,6 +58,10 @@ jobs:
           oidc: true
         env:
           BELLA_BAXTER_URL: https://api.bella-baxter.io
+          BELLA_BAXTER_DEBUG: '1'
+          BELLA_BAXTER_TENANT: cosmic-chimps
+          BELLA_BAXTER_PROJECT: look-ma-no-secrets
+          BELLA_BAXTER_ENV: prod
 
       - name: Verify — bella whoami
         run: bella whoami
