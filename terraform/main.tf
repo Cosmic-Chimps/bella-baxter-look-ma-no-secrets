@@ -36,13 +36,11 @@ terraform {
   #
   # Or run: terraform init -reconfigure -backend=false
   backend "s3" {
-    # Bucket and key are passed at init time via -backend-config or env vars:
-    #   TF_CLI_ARGS_init="-backend-config=bucket=my-tf-state -backend-config=key=lmns/terraform.tfstate"
-    # In CI these are set from GitHub Secrets (TF_STATE_BUCKET, TF_STATE_KEY).
-    # Region must match the bucket's region — defaults to us-east-1.
-    region = "us-east-1"
-    encrypt        = true
-    use_lockfile   = true  # native S3 state locking (Terraform ≥ 1.10, no DynamoDB needed)
+    # Bucket, key, and region are passed at init time via -backend-config:
+    #   TF_CLI_ARGS_init="-backend-config=bucket=my-tf-state -backend-config=key=lmns/terraform.tfstate -backend-config=region=eu-west-1"
+    # In CI these are set from GitHub vars (TF_STATE_BUCKET, TF_STATE_KEY, AWS_REGION).
+    encrypt      = true
+    use_lockfile = true  # native S3 state locking (Terraform ≥ 1.10, no DynamoDB needed)
   }
 }
 

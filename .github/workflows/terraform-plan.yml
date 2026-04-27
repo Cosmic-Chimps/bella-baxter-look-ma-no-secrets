@@ -57,7 +57,8 @@ jobs:
           bella run -- sh -c '
             terraform init \
               -backend-config="bucket=${TF_STATE_BUCKET}" \
-              -backend-config="key=${TF_STATE_KEY}"
+              -backend-config="key=${TF_STATE_KEY}" \
+              -backend-config="region=${AWS_REGION}"
           '
 
       - name: Terraform Validate
