@@ -71,8 +71,6 @@ locals {
   # Compute deterministic sslip.io domains from the Elastic IP.
   # These are registered in Dokploy via domain.create so Traefik routes them.
   ip_dashed     = replace(aws_eip.dokploy.public_ip, ".", "-")
-  sdk_domain    = "lmns-sdk.${local.ip_dashed}.sslip.io"
-  simple_domain = "lmns-run.${local.ip_dashed}.sslip.io"
 }
 
 # Store RDS password in Bella Baxter
@@ -246,7 +244,7 @@ resource "aws_subnet" "private_b" {
 
 resource "aws_security_group" "dokploy" {
   name        = "${var.app_name}-dokploy-sg"
-  description = "Dokploy host - SSH, Dokploy UI, HTTP/S, app port"
+  description = "EC2 app host - SSH, HTTP/S, app ports"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -255,13 +253,6 @@ resource "aws_security_group" "dokploy" {
     to_port = 22
     protocol = "tcp"
     cidr_blocks = var.allowed_ssh_cidr
-  }
-  ingress {
-    description = "Dokploy UI"
-    from_port   = 3000
-    to_port = 3000
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     description = "HTTP"
@@ -278,14 +269,14 @@ resource "aws_security_group" "dokploy" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    description = "App-demo SDK (bella sdk run)"
+    description = "lmns-simple app (bella run, no ZKE)"
     from_port   = 3001
     to_port     = 3001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    description = "App-demo simple (bella run)"
+    description = "lmns-sdk app (bella sdk run + ZKE)"
     from_port   = 3002
     to_port     = 3002
     protocol    = "tcp"
@@ -303,7 +294,7 @@ resource "aws_security_group" "dokploy" {
 
 resource "aws_security_group" "rds" {
   name        = "${var.app_name}-rds-sg"
-  description = "RDS - only reachable from Dokploy EC2"
+  description = "RDS - only reachable from EC2"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -433,10 +424,9 @@ resource "null_resource" "deploy_app" {
   ]
 
   triggers = {
-    instance_id         = aws_instance.dokploy.id
-    repo                = var.app_repo_url
-    sdk_compose_path    = var.sdk_compose_path
-    simple_compose_path = var.simple_compose_path
+    instance_id   = aws_instance.dokploy.id
+    repo          = var.app_repo_url
+    branch        = var.app_repo_branch
     # Redeploy if Bella secrets change
     db_secret_id  = bella_secret.database_url.id
     pwd_secret_id = bella_secret.rds_password.id
@@ -461,18 +451,13 @@ resource "null_resource" "deploy_app" {
 
   provisioner "file" {
     content = templatefile("${path.module}/configure_bella_app.sh.tpl", {
-      dokploy_admin_email    = var.dokploy_admin_email
-      dokploy_admin_password = var.dokploy_admin_password
-      github_token           = var.github_token
-      app_repo_url           = var.app_repo_url
-      app_repo_branch        = var.app_repo_branch
-      sdk_compose_path       = var.sdk_compose_path
-      simple_compose_path    = var.simple_compose_path
-      bella_baxter_url       = var.bella_baxter_url
-      bella_app_api_key      = var.bella_app_api_key
-      bella_app_private_key  = var.bella_app_private_key
-      bella_project          = var.bella_project
-      bella_env              = var.bella_env
+      app_repo_url          = var.app_repo_url
+      app_repo_branch       = var.app_repo_branch
+      bella_baxter_url      = var.bella_baxter_url
+      bella_app_api_key     = var.bella_app_api_key
+      bella_app_private_key = var.bella_app_private_key
+      bella_project         = var.bella_project
+      bella_env             = var.bella_env
     })
     destination = "/home/ubuntu/configure_bella_app.sh"
   }

@@ -30,7 +30,6 @@ jobs:
 
       # Non-sensitive Terraform variables
       TF_VAR_bella_baxter_url:    ${{ vars.BELLA_BAXTER_URL }}
-      TF_VAR_dokploy_admin_email: ${{ vars.DOKPLOY_ADMIN_EMAIL }}
       TF_VAR_aws_region:          ${{ vars.AWS_REGION || 'us-east-1' }}
       TF_VAR_project_name:        ${{ vars.PROJECT_NAME || 'lmns' }}
       TF_VAR_app_name:            ${{ vars.APP_NAME || 'look-ma-no-secrets-demo' }}
@@ -68,7 +67,7 @@ jobs:
 
       - name: Show outputs
         working-directory: terraform
-        run: terraform output -no-color
+        run: bella run -- sh -c 'terraform output -no-color'
 
   notify:
     runs-on: ubuntu-latest

@@ -14,20 +14,10 @@ ami_id = "ami-0905a3c97561e0b69"
 # Restrict to your IP for security
 allowed_ssh_cidr = ["0.0.0.0/0"]   # e.g. ["1.2.3.4/32"]
 
-# ── Dokploy ───────────────────────────────────────────────────────────────────
-dokploy_admin_email    = "admin@example.com"
-dokploy_admin_password = "ChangeMe123!"
-
-# GitHub token — needed for Dokploy to pull the repo (public repos: leave empty)
-github_token = ""
-
-# Repo containing both demo apps
+# ── App repo ──────────────────────────────────────────────────────────────────
+# Public repo — no token needed. Branch to deploy (default: main).
 app_repo_url    = "https://github.com/cosmic-chimps/bella-baxter"
 app_repo_branch = "main"
-
-# Paths to each app's docker-compose.yml within the repo
-sdk_compose_path    = "apps/demos/look-ma-no-secrets/app/docker-compose.yml"
-simple_compose_path = "apps/demos/look-ma-no-secrets/app-simple/docker-compose.yml"
 
 # ── RDS ───────────────────────────────────────────────────────────────────────
 db_instance_class = "db.t3.micro"

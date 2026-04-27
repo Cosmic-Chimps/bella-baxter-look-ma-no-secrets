@@ -11,7 +11,7 @@ variable "project_name" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type for the Dokploy host"
+  description = "EC2 instance type"
   type        = string
   default     = "t3.medium"
 }
@@ -28,25 +28,7 @@ variable "allowed_ssh_cidr" {
   default     = ["0.0.0.0/0"] # ⚠️  Change to your IP: ["x.x.x.x/32"]
 }
 
-# ─── Dokploy ─────────────────────────────────────────────────────────────────
-
-variable "dokploy_admin_email" {
-  description = "Email address for the Dokploy admin account"
-  type        = string
-}
-
-variable "dokploy_admin_password" {
-  description = "Password for the Dokploy admin account"
-  type        = string
-  sensitive   = true
-}
-
-variable "github_token" {
-  description = "GitHub personal access token (for Dokploy to pull the repo)"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
+# ─── App repo ────────────────────────────────────────────────────────────────
 
 variable "app_repo_url" {
   description = "HTTPS URL of the GitHub repo containing the demo app"
@@ -58,18 +40,6 @@ variable "app_repo_branch" {
   description = "Branch to deploy"
   type        = string
   default     = "main"
-}
-
-variable "sdk_compose_path" {
-  description = "Path to the SDK app docker-compose.yml inside the repo (bella sdk run + ZKE)"
-  type        = string
-  default     = "apps/demos/look-ma-no-secrets/app/docker-compose.yml"
-}
-
-variable "simple_compose_path" {
-  description = "Path to the simple app docker-compose.yml inside the repo (bella run, no ZKE)"
-  type        = string
-  default     = "apps/demos/look-ma-no-secrets/app-simple/docker-compose.yml"
 }
 
 variable "bella_project" {
