@@ -2,7 +2,6 @@
 
 const express = require('express');
 const { Pool } = require('pg');
-const { createBellaConfig } = require('@bella-baxter/sdk');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -120,6 +119,8 @@ async function main() {
   // Load all secrets from Bella Baxter and write them into process.env.
   // BELLA_BAXTER_URL and BELLA_BAXTER_API_KEY are injected by `bella sdk run --`.
   // Project and environment are auto-discovered from the API key via /api/v1/keys/me.
+  // Dynamic import needed — @bella-baxter/sdk is ESM-only.
+  const { createBellaConfig } = await import('@bella-baxter/sdk');
   const bella = await createBellaConfig({});
   bella.intoProcessEnv();
 
