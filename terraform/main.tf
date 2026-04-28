@@ -25,6 +25,10 @@ terraform {
       source  = "hashicorp/null"
       version = "~> 3.0"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.11"
+    }
   }
 
   # Remote state — used by GitHub Actions (CI).
@@ -66,7 +70,7 @@ resource "random_password" "rds" {
 
 locals {
   db_password  = random_password.rds.result
-  database_url = "postgresql://${var.db_username}:${random_password.rds.result}@${aws_db_instance.app.address}:5432/${var.db_name}?sslmode=require"
+  database_url = "postgresql://${var.db_username}:${random_password.rds.result}@${aws_db_instance.app.address}:5432/${var.db_name}"
 
   # Compute deterministic sslip.io domains from the Elastic IP.
   # These are registered in Dokploy via domain.create so Traefik routes them.
@@ -374,7 +378,7 @@ resource "aws_instance" "dokploy" {
   ami                    = var.ami_id
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.public.id
-  vpc_security_group_ids = [aws_security_group.ssh.id]
+  vpc_security_group_ids = [aws_security_group.dokploy.id]
 
   user_data = <<-EOF
     #!/bin/bash
@@ -411,14 +415,21 @@ resource "aws_eip" "dokploy" {
   tags     = { Name = "${var.app_name}-eip", Project = var.app_name }
 }
 
+# Wait for cloud-init to finish setting up TrustedUserCAKeys + sshd restart
+# before the null_resource tries to connect with a Bella-CA-signed certificate.
+resource "time_sleep" "wait_for_cloud_init" {
+  depends_on      = [aws_eip.dokploy]
+  create_duration = "90s"
+}
+
 # ────────────────────────────────────────────────────────────────────────────
-# Deploy the demo app via Dokploy API
+# Deploy the demo app
 # Runs after RDS is up + Bella secrets are stored
 # ────────────────────────────────────────────────────────────────────────────
 
 resource "null_resource" "deploy_app" {
   depends_on = [
-    aws_eip.dokploy,
+    time_sleep.wait_for_cloud_init,
     bella_secret.database_url,
     bella_secret.rds_password,
   ]
@@ -430,19 +441,24 @@ resource "null_resource" "deploy_app" {
     # Redeploy if Bella secrets change
     db_secret_id  = bella_secret.database_url.id
     pwd_secret_id = bella_secret.rds_password.id
+    # Redeploy if the provisioning script changes
+    script_hash   = sha1(file("${path.module}/configure_bella_app.sh.tpl"))
   }
 
   connection {
     type        = "ssh"
-    host        = aws_instance.dokploy.public_ip
+    host        = aws_eip.dokploy.public_ip
     user        = "ubuntu"
     private_key = tls_private_key.terraform_provisioner.private_key_openssh
     certificate = data.bella_ssh_signed_certificate.terraform_provisioner.signed_key
-    timeout     = "5m"
+    timeout     = "10m"
   }
 
   provisioner "remote-exec" {
     inline = [
+      # Wait for cloud-init to finish writing the trusted CA keys file and
+      # reloading sshd. Without this the cert auth can fail on first boot.
+      "cloud-init status --wait 2>/dev/null || true",
       "echo 'Connected via Bella SSH certificate ✓'",
       "whoami",
       "hostname",
@@ -455,7 +471,6 @@ resource "null_resource" "deploy_app" {
       app_repo_branch       = var.app_repo_branch
       bella_baxter_url      = var.bella_baxter_url
       bella_app_api_key     = var.bella_app_api_key
-      bella_app_private_key = var.bella_app_private_key
       bella_project         = var.bella_project
       bella_env             = var.bella_env
     })

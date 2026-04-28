@@ -12,7 +12,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@bella-baxter/express": "^0.1.1",
+    "@bella-baxter/sdk": "^0.1.1",
     "express": "^5.2.1",
     "pg": "^8.13.0"
   }

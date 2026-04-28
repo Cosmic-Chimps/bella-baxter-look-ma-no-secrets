@@ -32,11 +32,6 @@ bella_baxter_url = "https://api.your-bella-instance.com"
 # WebApp → look-ma-no-secrets → production → API Keys → Create
 bella_app_api_key = "bax-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
-# ZKE private key — only used by the SDK app (bella sdk run).
-# Generate with: bella auth setup
-# Leave empty to disable ZKE on the SDK app.
-bella_app_private_key = ""
-
 # Bella project and environment (must already exist — created by demo-seed.sh)
 bella_project = "look-ma-no-secrets"
 bella_env     = "production"

@@ -87,13 +87,6 @@ variable "bella_app_api_key" {
   sensitive   = true
 }
 
-variable "bella_app_private_key" {
-  description = "ZKE private key for the EC2 docker app (injected as BELLA_BAXTER_PRIVATE_KEY). Generate with: bella auth setup"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
 variable "bella_provider_slug" {
   description = "Bella Baxter provider slug (e.g. 'my-vault'). The provider to use when storing secrets via Terraform."
   type        = string
