@@ -12,15 +12,18 @@ FROM node:24-slim AS runtime
 # Install the Bella CLI via the official install script.
 # Pin a version with: docker build --build-arg BELLA_VERSION=v1.2.3 .
 ARG BELLA_VERSION=
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+# The installer is a release asset (#828): the pinned release's own copy, or the latest release's.
+# It verifies the release's GPG signature and aborts without it, so gnupg is installed for the build.
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates gnupg \
     && if [ -n "${BELLA_VERSION}" ]; then \
-         curl -sSfL https://raw.githubusercontent.com/cosmic-chimps/bella-baxter-cli/main/scripts/install-bella.sh \
-           | bash -s -- --version "${BELLA_VERSION}"; \
+         INSTALLER_URL="https://github.com/Cosmic-Chimps/bella-baxter-cli/releases/download/v${BELLA_VERSION#v}/install-bella.sh"; \
        else \
-         curl -sSfL https://raw.githubusercontent.com/cosmic-chimps/bella-baxter-cli/main/scripts/install-bella.sh \
-           | bash; \
+         INSTALLER_URL="https://github.com/Cosmic-Chimps/bella-baxter-cli/releases/latest/download/install-bella.sh"; \
        fi \
-    && apt-get purge -y --auto-remove curl \
+    && curl -sSfL -o /tmp/install-bella.sh "${INSTALLER_URL}" \
+    && bash /tmp/install-bella.sh \
+    && rm -f /tmp/install-bella.sh \
+    && apt-get purge -y --auto-remove curl gnupg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
