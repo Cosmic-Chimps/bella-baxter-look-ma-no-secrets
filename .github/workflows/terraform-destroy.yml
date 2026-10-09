@@ -57,13 +57,13 @@ jobs:
       # No BELLA_BAXTER_PROJECT / BELLA_BAXTER_ENV variables needed.
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: Cosmic-Chimps/bella-baxter-setup-action@v1
+      - uses: Cosmic-Chimps/bella-baxter-setup-action@f518f17b10705fa29347485404201b7e2d143fac # v0.1.1-preview.129
         with:
           oidc: 'true'
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           terraform_version: "~1.10"
 
@@ -86,7 +86,7 @@ jobs:
     needs: [destroy]
     if: always()
     steps:
-      - uses: slackapi/slack-github-action@v3.0.1
+      - uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: webhook-trigger

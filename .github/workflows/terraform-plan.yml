@@ -39,9 +39,9 @@ jobs:
       # No BELLA_BAXTER_PROJECT / BELLA_BAXTER_ENV variables needed.
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: Cosmic-Chimps/bella-baxter-setup-action@main
+      - uses: Cosmic-Chimps/bella-baxter-setup-action@f518f17b10705fa29347485404201b7e2d143fac # v0.1.1-preview.129
         with:
           oidc: 'true'
         env:
@@ -51,7 +51,7 @@ jobs:
           BELLA_BAXTER_PROJECT: ${{ vars.BELLA_BAXTER_PROJECT }}
           BELLA_BAXTER_ENV: ${{ vars.BELLA_BAXTER_ENV }}
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           terraform_version: '~1.10'
 
@@ -79,7 +79,7 @@ jobs:
 
       - name: Post plan as PR comment
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             const fs = require('fs');
