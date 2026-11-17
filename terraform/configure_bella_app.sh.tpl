@@ -42,26 +42,26 @@ curl -fsSL \
 sudo install -m 755 /tmp/bella /usr/local/bin/bella
 echo ">>> Bella: $(bella --version)"
 
-# ── 3b. Bella ZKE setup ───────────────────────────────────────────────────────
-# Generates a per-device P-256 keypair for zero-knowledge encryption.
+# ── 3b. Bella device key setup ────────────────────────────────────────────────
+# Generates a per-device P-256 keypair for device-bound encryption.
 # Skipped if a keypair already exists (re-deploys on the same instance reuse the same key).
-echo ">>> Setting up Bella ZKE keypair..."
+echo ">>> Setting up Bella device key..."
 BELLA_BAXTER_API_KEY="$BELLA_APP_API_KEY" \
   BELLA_BAXTER_URL="$BELLA_BAXTER_URL" \
   bella auth setup \
-  || echo ">>> ZKE keypair already exists, reusing."
-echo ">>> ZKE keypair ready."
+  || echo ">>> Device key already exists, reusing."
+echo ">>> Device key ready."
 
 # ── 4. Clone repo ─────────────────────────────────────────────────────────────
 echo ">>> Cloning $APP_REPO_URL @ $APP_REPO_BRANCH..."
 git clone --branch "$APP_REPO_BRANCH" --depth 1 "$APP_REPO_URL" "$APP_DIR"
 
 # ── 5. Install dependencies ───────────────────────────────────────────────────
-echo ">>> npm install — app-simple (bella run, no ZKE)..."
+echo ">>> npm install — app-simple (bella run, no device key)..."
 npm install --omit=dev \
   --prefix "$APP_DIR/app-simple"
 
-echo ">>> npm install — app (bella sdk run + ZKE)..."
+echo ">>> npm install — app (bella sdk run + device key)..."
 npm install --omit=dev \
   --prefix "$APP_DIR/app"
 
@@ -119,13 +119,13 @@ echo ""
 echo "================================================================"
 echo "  Both apps running via pm2!"
 echo ""
-echo "  Simple app (bella run, no ZKE):"
+echo "  Simple app (bella run, no device key):"
 echo "       http://$PUBLIC_IP:3001"
 echo "       http://$PUBLIC_IP:3001/health"
 echo "       http://$PUBLIC_IP:3001/products"
 echo "       http://$PUBLIC_IP:3001/db-test"
 echo ""
-echo "  SDK app (bella sdk run + ZKE):"
+echo "  SDK app (bella sdk run + device key):"
 echo "       http://$PUBLIC_IP:3002"
 echo "       http://$PUBLIC_IP:3002/health"
 echo "       http://$PUBLIC_IP:3002/products"

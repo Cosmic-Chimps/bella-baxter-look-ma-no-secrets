@@ -98,14 +98,14 @@ app.get('/secrets-demo', (_req, res) => {
 
   res.json({
     message: 'Look Ma! No secrets in Docker Compose!',
-    mode: 'bella run (plain CLI — no SDK, no ZKE)',
+    mode: 'bella run (plain CLI — no SDK, no device key)',
     bella_vars: Object.fromEntries(BELLA_VARS.map(k => [k, mask(k)])),
     app_vars:   Object.fromEntries(APP_VARS.map(k => [k, mask(k)])),
     proof: {
       'DATABASE_URL present':          !!process.env.DATABASE_URL,
       'Injected by bella run':          true,
       'Present in docker-compose.yml':  false,
-      'ZKE enabled':                    false,
+      'Device key in use':              false,
       'Works with any language/framework': true,
     },
   });

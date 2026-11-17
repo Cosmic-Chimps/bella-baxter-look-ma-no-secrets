@@ -15,10 +15,10 @@ output "rds_endpoint" {
   value       = aws_db_instance.app.endpoint
 }
 
-# ─── SDK app (bella sdk run + ZKE) ───────────────────────────────────────────
+# ─── SDK app (bella sdk run + device key) ───────────────────────────────────────────
 
 output "app_sdk_url" {
-  description = "SDK app base URL (bella sdk run + ZKE, port 3002)"
+  description = "SDK app base URL (bella sdk run + device key, port 3002)"
   value       = "http://${aws_eip.dokploy.public_ip}:3002"
 }
 
@@ -33,10 +33,10 @@ output "app_sdk_endpoints" {
   }
 }
 
-# ─── Simple app (bella run — no ZKE) ─────────────────────────────────────────
+# ─── Simple app (bella run — no device key) ─────────────────────────────────────────
 
 output "app_simple_url" {
-  description = "Simple app base URL (bella run, no ZKE, port 3001)"
+  description = "Simple app base URL (bella run, no device key, port 3001)"
   value       = "http://${aws_eip.dokploy.public_ip}:3001"
 }
 

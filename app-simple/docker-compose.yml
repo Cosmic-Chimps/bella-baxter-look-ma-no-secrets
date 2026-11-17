@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# docker-compose.yml — plain bella run demo (no SDK, no ZKE)
+# docker-compose.yml — plain bella run demo (no SDK, no device key)
 #
 # ⚠️  SAFE TO COMMIT — this file contains NO database secrets.
 #
@@ -7,7 +7,7 @@
 # The container's ENTRYPOINT ("bella run --") fetches them at startup
 # and injects them into process.env before node server.js launches.
 #
-# Contrast with app/docker-compose.yml which uses "bella sdk run" + ZKE.
+# Contrast with app/docker-compose.yml which uses "bella sdk run" + a device key.
 # Both apps read from the same Bella project/environment.
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -19,9 +19,9 @@ services:
       - "3002:3000"
     environment:
       # ── Bella connection ──────────────────────────────────────────────────
-      # No BELLA_BAXTER_PRIVATE_KEY — ZKE is disabled for this demo.
+      # No BELLA_BAXTER_PRIVATE_KEY — no device key is used in this demo.
       # This is the whole point of the comparison: bella run works without
-      # any additional setup, bella sdk run adds ZKE on top.
+      # any additional setup, bella sdk run adds a device key on top.
       BELLA_BAXTER_URL:     ${BELLA_BAXTER_URL}
       BELLA_BAXTER_API_KEY: ${BELLA_BAXTER_API_KEY}
       BELLA_ENV:     ${BELLA_ENV:-production}

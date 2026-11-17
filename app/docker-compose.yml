@@ -21,7 +21,7 @@ services:
       # ── Bella connection ──────────────────────────────────────────────────
       # BELLA_BAXTER_API_KEY is a bax-... opaque token obtained from the WebApp.
       # BELLA_BAXTER_URL tells the CLI/SDK where the Baxter API lives.
-      # BELLA_BAXTER_PRIVATE_KEY enables Zero-Knowledge Encryption (ZKE).
+      # BELLA_BAXTER_PRIVATE_KEY presents a registered device key.
       # These are the only credentials this container ever needs.
       BELLA_BAXTER_URL:         ${BELLA_BAXTER_URL}
       BELLA_BAXTER_API_KEY:     ${BELLA_BAXTER_API_KEY}

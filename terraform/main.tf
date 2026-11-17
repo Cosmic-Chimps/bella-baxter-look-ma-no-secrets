@@ -273,14 +273,14 @@ resource "aws_security_group" "dokploy" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    description = "lmns-simple app (bella run, no ZKE)"
+    description = "lmns-simple app (bella run, no device key)"
     from_port   = 3001
     to_port     = 3001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    description = "lmns-sdk app (bella sdk run + ZKE)"
+    description = "lmns-sdk app (bella sdk run + device key)"
     from_port   = 3002
     to_port     = 3002
     protocol    = "tcp"

@@ -35,7 +35,7 @@ COPY db/ ./db/
 
 EXPOSE 3000
 
-# bella sdk run fetches secrets from Bella (with ZKE when BELLA_BAXTER_PRIVATE_KEY is set),
+# bella sdk run fetches secrets from Bella (with a device key when BELLA_BAXTER_PRIVATE_KEY is set),
 # injects them into the environment, then exec's the real command.
 # The database password is NEVER written to any file on disk.
 ENTRYPOINT ["bella", "sdk", "run", "--"]
