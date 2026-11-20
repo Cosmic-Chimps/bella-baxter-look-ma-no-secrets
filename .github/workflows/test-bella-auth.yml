@@ -53,7 +53,7 @@ jobs:
           echo "Actual   claim: ref = $REF"
 
       - name: Setup Bella CLI + OIDC auth
-        uses: Cosmic-Chimps/bella-baxter-setup-action@v0
+        uses: Cosmic-Chimps/bella-baxter-setup-action@ac4b758d3fdc06d54e05c9bd60d464a25571129e # v0.1.2
         with:
           oidc: true
         env:

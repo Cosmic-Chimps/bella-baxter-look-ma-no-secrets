@@ -59,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: Cosmic-Chimps/bella-baxter-setup-action@v0
+      - uses: Cosmic-Chimps/bella-baxter-setup-action@ac4b758d3fdc06d54e05c9bd60d464a25571129e # v0.1.2
         with:
           oidc: 'true'
 
